@@ -4,7 +4,7 @@ import './App.css';
 const fetchDataFromServer = async (email, setDataFromServer, setLoading) => {
   setLoading(true);
   try {
-    const response = await fetch(`/search?email=${email}`);
+    const response = await fetch(`http://localhost:3000/search?email=${email}`);
     const data = await response.json();
     setDataFromServer(data);
     setLoading(false);
