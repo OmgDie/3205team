@@ -10,7 +10,7 @@
 ## Инструкции по запуску
 1. Клонируйте репозиторий с помощью команды:
    ```bash
-   git clone <https://github.com/OmgDie/3205team>
+   git clone https://github.com/OmgDie/3205team
    ```
 
 2. Перейдите в директорию проекта:
