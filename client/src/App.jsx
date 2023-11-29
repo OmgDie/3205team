@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import InputMask from 'react-input-mask';
 import './App.css';
 
-const fetchDataFromServer = async (email, setDataFromServer, setLoading) => {
-  setLoading(true);
+const addMaskToNumber = number => {
+  return number.replace(/(\d{2})(\d{2})(\d{2})/, '$1-$2-$3');
+};
+
+const fetchDataFromServer = async email => {
   try {
     const response = await fetch(`http://localhost:3000/search?email=${email}`);
     const data = await response.json();
-    setDataFromServer(data);
-    setLoading(false);
+    return data;
   } catch (error) {
     console.error('Error fetching data:', error);
-    setLoading(false);
+    return [];
   }
 };
 
@@ -88,12 +91,28 @@ const useInput = (initialValue, validations) => {
 const App = () => {
   const [dataFromServer, setDataFromServer] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [noMatches, setNoMatches] = useState(false);
   const email = useInput('', { isEmpty: true, minLength: 3, isEmail: true });
   const number = useInput('', { maxLenght: 6 });
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     if (email.inputVaild) {
-      fetchDataFromServer(email.value, setDataFromServer, setLoading);
+      setDataFromServer([]);
+      setLoading(true);
+      setNoMatches(false);
+
+      try {
+        const data = await fetchDataFromServer(email.value);
+        setLoading(false);
+        setDataFromServer(data);
+
+        if (data.length === 0) {
+          setNoMatches(true);
+        }
+      } catch (error) {
+        console.error('Error handling form submit:', error);
+        setLoading(false);
+      }
     }
   };
 
@@ -116,6 +135,7 @@ const App = () => {
           name="email"
           type="email"
           placeholder="Enter ur email"
+          className="input"
           required
         ></input>
         {number.isDirty && number.maxLengthError && (
@@ -123,14 +143,16 @@ const App = () => {
             Максимальная длина номера 6 символов
           </div>
         )}
-        <input
+        <InputMask
+          mask="99-99-99"
+          maskChar="_"
           value={number.value}
           onChange={e => number.onChange(e)}
-          onBlur={e => number.onChange(e)}
+          onBlur={e => number.onBlur(e)}
           name="number"
-          type="tel"
           placeholder="Enter ur number"
-        ></input>
+          className="input"
+        />
         <button
           disabled={!email.inputVaild}
           className="button"
@@ -140,14 +162,20 @@ const App = () => {
           submit
         </button>
         {loading && <p>Loading...</p>}
-        <div>
-          {dataFromServer.map(user => (
-            <div key={user.email}>
-              <p>Email: {user.email}</p>
-              <p>Number: {user.number}</p>
-            </div>
-          ))}
-        </div>
+        {Array.isArray(dataFromServer) && dataFromServer.length > 0 ? (
+          <div>
+            {dataFromServer.map(user => (
+              <div key={user.email}>
+                <p style={{ padding: '10px' }}>Email: {user.email}</p>
+                <p style={{ padding: '10px' }}>
+                  Number: {addMaskToNumber(user.number)}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No matches found.</p>
+        )}
       </div>
     </div>
   );
